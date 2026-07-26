@@ -61,19 +61,23 @@ def home():
 def random_cafe():
     """Return a random cafe from the database."""
     result = db.session.execute(db.select(Cafe))
-    all_cafe = result.scalars().all()
-    random_cafe = random.choice(all_cafe)
+    all_cafes = result.scalars().all()
+    if not all_cafes:
+        return jsonify(
+            error="No cafes available."
+        ), 404
+    random_cafe = random.choice(all_cafes)
     response = jsonify(cafe=random_cafe.to_dict())
 
     return response
 
 @app.route("/all", methods=["GET", "POST"])
-def all_cafes():
+def get_all_cafes():
     """Get a list of all cafes."""
     results = db.session.execute(db.select(Cafe))
-    all_cafe = results.scalars().all()
+    all_cafes = results.scalars().all()
 
-    return jsonify(cafes=[cafe.to_dict() for cafe in all_cafe])
+    return jsonify(cafes=[cafe.to_dict() for cafe in all_cafes])
 
 @app.route("/search", methods=["GET", "POST"])
 def search_cafe():
@@ -81,15 +85,17 @@ def search_cafe():
     location = request.args.get("loc")
 
     result = db.session.execute(db.select(Cafe).where(Cafe.location == location))
-    all_cafe = result.scalars().all()
-    if all_cafe:
-        return jsonify(cafes=[cafe.to_dict() for cafe in all_cafe])
+    all_cafes = result.scalars().all()
+    if all_cafes:
+        return jsonify(cafes=[cafe.to_dict() for cafe in all_cafes])
     else:
-        return "Sorry, we don't have a cafe at that location."
+        return jsonify(
+            error="Sorry, we don't have a cafe at that location."
+        ), 404
 
 
 @app.route("/add", methods=["POST"])
-def post_new_cafe():
+def add_cafe():
     """add a new cafe to the database."""
     new_cafe = Cafe (
         name=request.args.get("name"),
@@ -123,11 +129,11 @@ def delete_cafe(coffe_id):
     api_key = request.args.get("api_key")
 
     if api_key != "TopSecretAPIKey":
-        return jsonify(response={'not found': "You can not delete data without API key."}), 403
+        return jsonify(response={'not found': "You can not delete data without API key."}), 404
     coffe = db.session.get(Cafe, coffe_id)
     print(coffe_id)
     if coffe is None:
-        return jsonify(response={'not found': "that coffe id does not exist in our database."}), 403
+        return jsonify(response={'not found': "that coffe id does not exist in our database."}), 404
 
     else:
         db.session.delete(coffe)
