@@ -6,12 +6,16 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Boolean
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # URL FOR POSTMAN: https://documenter.getpostman.com/view/55360170/2sBXwntXXm
 # MY VERY FIRST API!!!!!!
 
 app = Flask(__name__)
-
+API_KEY = os.getenv("API_KEY")
 # CREATE DB
 class Base(DeclarativeBase):
     pass
@@ -128,8 +132,8 @@ def update_price(coffe_id):
 def delete_cafe(coffe_id):
     api_key = request.args.get("api_key")
 
-    if api_key != "TopSecretAPIKey":
-        return jsonify(response={'not found': "You can not delete data without API key."}), 404
+    if api_key != API_KEY:
+        return jsonify(response={'not found': "You can not delete data without API key."}), 403
     coffe = db.session.get(Cafe, coffe_id)
     print(coffe_id)
     if coffe is None:
